@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BezierSolution
@@ -27,7 +27,7 @@ namespace BezierSolution
 
 		private static Material gizmoMaterial;
 
-		private List<BezierPoint> endPoints = new List<BezierPoint>();
+		public List<BezierPoint> endPoints = new List<BezierPoint>();
 
 		public bool loop = false;
 		public bool drawGizmos = false;
@@ -506,6 +506,87 @@ namespace BezierSolution
 			}
 
 			return result;
+		}
+
+		public float GetNormalizedT( Vector3 worldPos)
+		{
+			float accuracy = 100f;
+			Vector3 result = Vector3.zero;
+			float normalizedT = -1f;
+
+			float step = AccuracyToStepSize( accuracy );
+
+			float minDistance = Mathf.Infinity;
+			for( float i = 0f; i < 1f; i += step )
+			{
+				Vector3 thisPoint = GetPoint( i );
+				float thisDistance = ( worldPos - thisPoint ).sqrMagnitude;
+				if( thisDistance < minDistance )
+				{
+					minDistance = thisDistance;
+					result = thisPoint;
+					normalizedT = i;
+				}
+			}
+
+			return normalizedT;
+		}
+
+		public Vector3[] getTangent( Vector3 worldPos)
+		{
+			float accuracy = 100f;
+			Vector3 result = Vector3.zero;
+			float normalizedT = -1f;
+
+			float step = AccuracyToStepSize( accuracy );
+
+			float minDistance = Mathf.Infinity;
+			for( float i = 0f; i < 1f; i += step )
+			{
+				Vector3 thisPoint = GetPoint( i );
+				float thisDistance = ( worldPos - thisPoint ).sqrMagnitude;
+				if( thisDistance < minDistance )
+				{
+					minDistance = thisDistance;
+					result = thisPoint;
+					normalizedT = i;
+				}
+			}
+			Vector3 tanT = GetTangent(normalizedT);
+
+			float length = GetLengthApproximately(0,1);
+			float startingLength = normalizedT*length;
+			float endingLength = startingLength+1;
+			float normalizedTF = endingLength/length;
+
+			Vector3 fromPointPos = GetPoint(normalizedT);
+			Vector3 towardsPointPos = GetPoint(normalizedTF);
+			towardsPointPos.y = fromPointPos.y;
+
+			GameObject FromGo = new GameObject("From");
+			GameObject ToGo = new GameObject("To");
+
+			FromGo.transform.position = fromPointPos;
+			ToGo.transform.position = towardsPointPos;
+
+			FromGo.transform.LookAt(ToGo.transform);
+
+			Quaternion yoyobabe = FromGo.transform.rotation;
+			Vector3 hahaha = yoyobabe.eulerAngles;
+			hahaha -= new Vector3(0, 90, 0);
+
+			Vector3 left = hahaha;
+			hahaha += new Vector3(0, 180, 0);
+
+			Vector3 right = hahaha;
+
+			Vector3[] Tangents = new Vector3[2];
+			Tangents[0] = left;
+			Tangents[1] = right;
+
+			Destroy(FromGo);
+			Destroy(ToGo);
+			return Tangents;
 		}
 
 		public Vector3 MoveAlongSpline( ref float normalizedT, float deltaMovement, int accuracy = 3 )
